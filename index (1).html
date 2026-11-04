@@ -1,0 +1,843 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Catmint Isle</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gluten:wght@500;700&family=Figtree:wght@400;600;700&family=DM+Mono:wght@500&display=swap">
+<style>
+[hidden]{display:none!important} img{max-width:100%} :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)} body{margin:0}
+/* Layout: an illustrated quilt-like island of rectangular plots in a patterned sea on the left; a sage notebook panel on the right; stacks on phones. */
+:root{
+  --bg:#e8eee6; --surface:#f6f9f4; --surface-2:#edf2ea; --ink:#2b2234; --muted:#655d6e; --line:#cdd7ca;
+  --accent:#7a56c8; --accent-soft:#e7def8; --on-accent:#ffffff;
+  --good:#2f7d43; --warn:#9a6200; --bad:#b83347;
+  --f-display:'Gluten','Comic Sans MS',cursive; --f-body:'Figtree',system-ui,-apple-system,sans-serif; --f-mono:'DM Mono',ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#1c1922; --surface:#26222d; --surface-2:#2e2936; --ink:#efe9f5; --muted:#aaa2b5; --line:#3c3546;
+  --accent:#a98cf0; --accent-soft:#3a2f52; --on-accent:#1c1922;
+  --good:#6cc283; --warn:#e2b04a; --bad:#ef7486; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#1c1922; --surface:#26222d; --surface-2:#2e2936; --ink:#efe9f5; --muted:#aaa2b5; --line:#3c3546;
+  --accent:#a98cf0; --accent-soft:#3a2f52; --on-accent:#1c1922;
+  --good:#6cc283; --warn:#e2b04a; --bad:#ef7486; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:18px 32px}
+.wrap{max-width:1320px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(2rem,4.5vw,3rem);line-height:1;margin:0;color:var(--accent)}
+.tag{margin:6px 0 0;color:var(--muted);max-width:62ch}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.btn{border:1.5px solid var(--line);background:var(--surface);border-radius:11px;padding:8px 12px;font-weight:600;display:inline-flex;align-items:center;gap:8px;transition:transform .12s, border-color .12s, background .12s}
+.btn:hover:not(:disabled){border-color:var(--accent);transform:translateY(-1px)}
+.btn:active:not(:disabled){transform:translateY(1px)}
+.btn:disabled{opacity:.42;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);box-shadow:0 3px 0 color-mix(in srgb,var(--accent) 60%,#000)}
+.btn.on{background:var(--accent-soft);border-color:var(--accent)}
+.ri{width:1.3em;height:1.3em;vertical-align:-.3em;display:inline-block;flex:none}
+.game{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:960px){.game{grid-template-columns:minmax(0,1fr)}}
+.board-side{display:flex;flex-direction:column;gap:10px;min-width:0}
+.status{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:space-between;min-height:48px}
+.status-text{font-weight:600;font-size:1.02rem;display:flex;align-items:center;gap:10px}
+.status-text svg{width:32px;height:32px;flex:none}
+.dice{display:flex;gap:8px}
+.die{width:42px;height:42px;border-radius:10px;background:#fffdf7;border:1.5px solid #d8cfb8;box-shadow:0 3px 0 #cbbf9f, inset 0 -3px 0 rgba(0,0,0,.05);display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:6px;gap:1px}
+.die i{width:7px;height:7px;border-radius:50%;background:#2b2234;place-self:center;visibility:hidden}
+.die i.on{visibility:visible}
+.die.seven i{background:#c0303f}
+.die.roll{animation:roll .45s ease-out}
+@keyframes roll{0%{transform:rotate(-200deg) scale(.6)}70%{transform:rotate(12deg) scale(1.08)}100%{transform:none}}
+.board{border-radius:24px;overflow:hidden;max-width:100%;box-shadow:0 10px 30px rgba(30,50,60,.25)}
+.board svg{display:block;width:100%;height:auto;user-select:none;-webkit-user-select:none}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;color:var(--muted);font-size:.85rem}
+.legend span{display:inline-flex;gap:6px;align-items:center}
+.sw{width:14px;height:14px;border-radius:4px;display:inline-block;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
+
+aside{display:flex;flex-direction:column;gap:18px;min-width:0}
+.sec{display:flex;flex-direction:column;gap:10px;min-width:0}
+.sec h2{font-family:var(--f-display);font-weight:500;font-size:1.3rem;margin:0;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.sec h2 small{font-family:var(--f-body);font-size:.75rem;color:var(--muted);font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+.players{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.pl{border:1.5px solid var(--line);border-radius:14px;padding:8px 10px;background:var(--surface);display:flex;flex-direction:column;gap:2px;min-width:0;transition:box-shadow .2s}
+.pl.cur{border-color:var(--pc);box-shadow:0 0 0 2px var(--pc) inset, 0 4px 14px color-mix(in srgb,var(--pc) 30%,transparent)}
+.pl .nm{font-weight:700;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl .nm svg{width:26px;height:26px;flex:none}
+.pl .vp{font-family:var(--f-mono);font-size:1.6rem;line-height:1.1}
+.pl .vp small{font-size:.75rem;color:var(--muted)}
+.pl .meta{font-size:.78rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.vpbar{height:5px;border-radius:3px;background:var(--line);overflow:hidden}
+.vpbar b{display:block;height:100%;background:var(--pc);border-radius:3px;transition:width .4s}
+.hand{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.chip{border-radius:12px;background:var(--surface-2);padding:8px 4px 6px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:1px}
+.chip svg{width:30px;height:30px}
+.chip .ct{font-family:var(--f-mono);font-size:1.15rem;font-variant-numeric:tabular-nums}
+.chip .lb{font-size:.66rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.chip.mint{background:var(--accent-soft)}
+.chip.zero{opacity:.5}
+.acts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.acts .btn{justify-content:space-between;width:100%}
+.acts .cost{display:inline-flex;gap:1px}
+.acts .cost .ri{width:1.15em;height:1.15em}
+.trade{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+select{font:inherit;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:7px 8px}
+.cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.cat{border:1.5px solid var(--line);border-radius:16px;padding:10px 12px;background:var(--surface);display:flex;flex-direction:column;gap:7px;min-width:0}
+.cat.happy{border-color:var(--good)}
+.cat.hungry{border-color:var(--bad)}
+.cat .top{display:flex;gap:10px;align-items:center}
+.cat .top svg.face{width:52px;height:52px;flex:none;background:var(--surface-2);border-radius:50%}
+.cat.happy .top svg.face{animation:purr 2.4s ease-in-out infinite}
+@keyframes purr{50%{transform:rotate(-4deg)}}
+.cat .cn{font-family:var(--f-display);font-size:1.2rem;font-weight:500;line-height:1.1}
+.cat .br{font-size:.8rem;color:var(--muted)}
+.cat .row{display:flex;gap:8px;flex-wrap:wrap;font-size:.82rem;align-items:center}
+.hunger{display:inline-flex;gap:3px}
+.hunger i{width:14px;height:6px;border-radius:3px;background:var(--line)}
+.hunger i.f{background:var(--warn)}
+.hunger.h2 i.f{background:var(--bad)}
+.pill{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:2px 8px;border-radius:999px}
+.pill.good{color:var(--good);border:1.5px solid var(--good)}
+.pill.warn{color:var(--warn);border:1.5px solid var(--warn)}
+.pill.bad{color:var(--bad);border:1.5px solid var(--bad)}
+.perk{font-size:.8rem;color:var(--muted)}
+.empty{color:var(--muted);font-size:.9rem;padding:12px;border:1.5px dashed var(--line);border-radius:14px;display:flex;gap:12px;align-items:center}
+.empty svg{width:56px;height:56px;flex:none;opacity:.85}
+.log{max-height:190px;overflow:auto;font-size:.85rem;display:flex;flex-direction:column;gap:4px;padding-right:4px}
+.log div{display:flex;gap:8px;align-items:baseline}
+.log .d{width:8px;height:8px;border-radius:50%;flex:none;transform:translateY(-1px)}
+.log .ri{width:1.15em;height:1.15em}
+details{border-top:1.5px solid var(--line);padding-top:10px}
+summary{font-family:var(--f-display);font-size:1.2rem;cursor:pointer}
+.rules{font-size:.88rem;max-width:65ch}
+.rules ul{padding-left:18px;margin:6px 0}
+.rules li{margin:4px 0}
+.breedgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:8px}
+.breedgrid div{display:flex;gap:8px;align-items:center;font-size:.8rem}
+.breedgrid svg{width:36px;height:36px;flex:none}
+
+.vhint{fill:#fff;stroke:var(--accent);stroke-width:3;cursor:pointer;animation:pulse 1.1s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+.ehint{stroke:#fff;stroke-width:6;stroke-linecap:round;stroke-dasharray:2 7;pointer-events:none;animation:dash 1s linear infinite}
+.ehit{stroke:transparent;stroke-width:20;cursor:pointer;stroke-linecap:round}
+.ehit:hover{stroke:rgba(255,255,255,.45)}
+.thint{cursor:pointer;fill:rgba(255,255,255,0);stroke:#fff;stroke-width:3;stroke-dasharray:8 6}
+.thint:hover{fill:rgba(255,255,255,.22)}
+.chint{cursor:pointer;fill:rgba(255,255,255,.15);stroke:#fff;stroke-width:3;stroke-dasharray:4 4;animation:pulse 1.1s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+.pop{animation:pop .35s cubic-bezier(.3,1.6,.6,1)}
+@keyframes pop{from{transform:scale(0)}}
+.pop{transform-box:fill-box;transform-origin:center}
+@keyframes pulse{50%{transform:scale(1.2)}}
+@keyframes dash{to{stroke-dashoffset:-18}}
+.wave{animation:wave 6s ease-in-out infinite alternate}
+@keyframes wave{to{transform:translateX(14px)}}
+@media (prefers-reduced-motion: reduce){.vhint,.ehint,.chint,.wave,.die.roll,.pop,.cat.happy .top svg.face{animation:none}}
+.modal{position:fixed;inset:0;background:rgba(20,15,28,.55);display:grid;place-items:center;padding:20px;z-index:20}
+.modal .box{background:var(--surface);border-radius:22px;padding:26px;max-width:440px;width:100%;display:flex;flex-direction:column;gap:12px;text-align:center;align-items:center}
+.modal .box svg{width:90px;height:90px}
+.modal h3{font-family:var(--f-display);font-size:2.2rem;margin:0;color:var(--accent)}
+.modal .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+</style>
+</head>
+<body>
+
+
+<!-- shared resource icons -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="i-wood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b47744"/><stop offset="1" stop-color="#7d4c25"/></linearGradient>
+    <linearGradient id="i-stone" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b9b4c6"/><stop offset="1" stop-color="#77728a"/></linearGradient>
+    <radialGradient id="i-yarn" cx=".35" cy=".35" r=".8"><stop offset="0" stop-color="#ff9cc2"/><stop offset="1" stop-color="#cf4b84"/></radialGradient>
+    <linearGradient id="i-fish" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffab5e"/><stop offset="1" stop-color="#e2672a"/></linearGradient>
+    <linearGradient id="i-water" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fd0f5"/><stop offset="1" stop-color="#2a86c7"/></linearGradient>
+  </defs>
+  <symbol id="r-wood" viewBox="0 0 24 24"><rect x="2" y="7.5" width="17" height="10" rx="5" fill="url(#i-wood)"/><path d="M5 10.5h8M6 14.5h9" stroke="#5e3818" stroke-width="1" stroke-linecap="round" opacity=".6"/><ellipse cx="18" cy="12.5" rx="4.2" ry="5" fill="#ecc58b" stroke="#7d4c25" stroke-width="1.2"/><ellipse cx="18" cy="12.5" rx="2.1" ry="2.6" fill="none" stroke="#b8834d" stroke-width="1"/><path d="M9 7.5 l2-3 l1.5 3" fill="#5aa04c"/></symbol>
+  <symbol id="r-stone" viewBox="0 0 24 24"><ellipse cx="12" cy="20.5" rx="9" ry="1.6" fill="#000" opacity=".15"/><path d="M3 17L5.5 8.5 12.5 4 20 7.5 22 15.5 16.5 20H7.5Z" fill="url(#i-stone)"/><path d="M5.5 8.5L12.5 4 20 7.5 13 11Z" fill="#d6d2e1"/><path d="M13 11L16.5 20M13 11L5.5 8.5" stroke="#6b667d" stroke-width=".8" fill="none"/></symbol>
+  <symbol id="r-yarn" viewBox="0 0 24 24"><path d="M17 18c3 2 5 0 6 2" stroke="#cf4b84" stroke-width="1.4" fill="none" stroke-linecap="round"/><circle cx="11.5" cy="12" r="8.5" fill="url(#i-yarn)"/><path d="M4 10Q11.5 5 19.5 8.5M3.5 14Q11.5 9 20 12.5M6 18.5Q12 13.5 19 16.5M9 4Q6 12 10 20.3" stroke="#ffd3e4" stroke-width="1.3" fill="none" stroke-linecap="round"/></symbol>
+  <symbol id="r-fish" viewBox="0 0 24 24"><path d="M2.5 12Q9.5 3.5 17 12Q9.5 20.5 2.5 12Z" fill="url(#i-fish)"/><path d="M16 12L22.5 6.5 21.3 12 22.5 17.5Z" fill="#e2672a"/><path d="M8 6.5q2 2.5 0 4.8M10 13q3 2 5 0" stroke="#fff" stroke-width="1" fill="none" opacity=".6"/><circle cx="6.6" cy="10.8" r="1.2" fill="#2b2234"/></symbol>
+  <symbol id="r-water" viewBox="0 0 24 24"><path d="M12 2.5S4.8 10.7 4.8 15.3a7.2 7.2 0 0 0 14.4 0C19.2 10.7 12 2.5 12 2.5Z" fill="url(#i-water)"/><path d="M8.6 15.5a3.6 3.6 0 0 0 3 3.4" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".85"/></symbol>
+  <symbol id="r-mint" viewBox="0 0 24 24"><path d="M12 22V6" stroke="#3f7d48" stroke-width="1.6" stroke-linecap="round"/><path d="M12 17C8 17 5 15 4.5 11.5 8.5 11.5 11 13.5 12 17ZM12 14C16 14 19 12 19.5 8.5 15.5 8.5 13 10.5 12 14Z" fill="#5fae6a"/><path d="M12 17C8 17 5 15 4.5 11.5M12 14C16 14 19 12 19.5 8.5" stroke="#3f7d48" stroke-width=".8" fill="none"/><circle cx="12" cy="4.5" r="2" fill="#a98cf0"/><circle cx="10" cy="6.5" r="1.6" fill="#8f6fe0"/><circle cx="14" cy="6.5" r="1.6" fill="#8f6fe0"/><circle cx="12" cy="8.3" r="1.4" fill="#b9a1f5"/></symbol>
+</svg>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Catmint Isle</h1>
+      <p class="tag">Settle the island, adopt cats and keep them fed. A cat that gets its food and water at home pays you back in catmint, which counts as any resource. First to 10 points wins.</p>
+    </div>
+    <button class="btn" id="newGame">New game</button>
+  </header>
+  <div class="game">
+    <section class="board-side">
+      <div class="status"><div class="status-text" id="status"></div><div class="dice" id="dice"></div></div>
+      <div class="board">
+        <svg id="board" viewBox="-48 -48 696 496" role="img" aria-label="Island game board">
+          <defs>
+            <filter id="sh" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="2" stdDeviation="1.6" flood-color="#000" flood-opacity=".35"/></filter>
+            <filter id="shl" x="-10%" y="-10%" width="120%" height="125%"><feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#0b2f38" flood-opacity=".45"/></filter>
+            <linearGradient id="g-sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a96a3"/><stop offset="1" stop-color="#2d6b7a"/></linearGradient>
+            <pattern id="p-wave" width="60" height="30" patternUnits="userSpaceOnUse"><path d="M0 15q7.5-7 15 0t15 0 15 0 15 0" stroke="#fff" stroke-opacity=".12" stroke-width="2" fill="none"/></pattern>
+            <linearGradient id="g-forest" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#78b463"/><stop offset="1" stop-color="#4b8a45"/></linearGradient>
+            <linearGradient id="g-meadow" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d6e98c"/><stop offset="1" stop-color="#a6cb5f"/></linearGradient>
+            <linearGradient id="g-grass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a8d47b"/><stop offset="1" stop-color="#7fb35c"/></linearGradient>
+            <radialGradient id="g-water" cx=".45" cy=".4" r=".7"><stop offset="0" stop-color="#7cc8ec"/><stop offset="1" stop-color="#2f7fb8"/></radialGradient>
+            <linearGradient id="g-moss" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9fd8a4"/><stop offset="1" stop-color="#6bae80"/></linearGradient>
+            <linearGradient id="g-quarry" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c3bccb"/><stop offset="1" stop-color="#8f879f"/></linearGradient>
+            <linearGradient id="g-sand" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6e2a6"/><stop offset="1" stop-color="#e3c37a"/></linearGradient>
+            <linearGradient id="g-gloss" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".28"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".12"/></linearGradient>
+            <radialGradient id="g-token" cx=".4" cy=".35" r=".75"><stop offset="0" stop-color="#fffdf5"/><stop offset="1" stop-color="#ecdfbd"/></radialGradient>
+          </defs>
+          <rect x="-48" y="-48" width="696" height="496" fill="url(#g-sea)"/>
+          <rect class="wave" x="-80" y="-48" width="760" height="496" fill="url(#p-wave)"/>
+          <rect x="-18" y="-18" width="636" height="436" rx="30" fill="#fff" opacity=".22"/>
+          <rect x="-12" y="-12" width="624" height="424" rx="26" fill="#e9d9aa" filter="url(#shl)"/>
+          <g id="terrain"></g>
+          <g id="dyn"></g>
+        </svg>
+      </div>
+      <div class="legend" id="legend"></div>
+    </section>
+    <aside id="panel"></aside>
+  </div>
+</div>
+<div id="modal"></div>
+
+<script>
+const COLS=5,ROWS=4,TW=120,TH=100,IN=5;
+const TERR={
+  forest:{res:'wood',label:'Scratch Forest',color:'#5f9c50'},
+  quarry:{res:'stone',label:'Pebble Quarry',color:'#a39cb2'},
+  meadow:{res:'yarn',label:'Yarn Meadow',color:'#bfdb73'},
+  pond:{res:'fish',label:'Fish Pond',color:'#4d9fd2'},
+  spring:{res:'water',label:'Mossy Spring',color:'#86cf9c'},
+  sandbox:{res:null,label:'Sunny Sandbox',color:'#ecd08b'}
+};
+const RES=['wood','stone','yarn','fish','water'];
+const RN={wood:'Wood',stone:'Stone',yarn:'Yarn',fish:'Fish',water:'Water',mint:'Catmint'};
+const ic=r=>`<svg class="ri" aria-label="${RN[r]}"><use href="#r-${r}"/></svg>`;
+const icons=cost=>Object.entries(cost).map(([k,v])=>ic(k).repeat(v)).join('');
+const COST={path:{wood:1,stone:1},bed:{wood:1,stone:1,yarn:1,fish:1},castle:{stone:3,yarn:2},cat:{yarn:1,fish:1,water:1}};
+const PIPS=n=>n?6-Math.abs(7-n):0;
+const WIN=10;
+const BREEDS={
+  tabby:{n:'Tabby',hab:'forest',feed:{fish:1,water:1},mint:1,vp:1,bonus:{wood:1},perk:'Tree climber: +1 wood when fed at home.'},
+  maine:{n:'Maine Coon',hab:'meadow',feed:{fish:2,water:1},mint:1,vp:2,perk:'Big floof: eats 2 fish, worth 2 points when happy.'},
+  siamese:{n:'Siamese',hab:'spring',feed:{fish:1,water:1},mint:1,vp:1,guard:true,perk:'Watchcat: while happy, the Stray Dog can’t steal from you.'},
+  bengal:{n:'Bengal',hab:'pond',feed:{water:1},mint:1,vp:1,perk:'Fisher: catches its own fish, only needs water.'},
+  persian:{n:'Persian',hab:'meadow',feed:{fish:1,water:2},mint:2,vp:1,perk:'Pampered: drinks 2 water, gives 2 catmint.'},
+  sphynx:{n:'Sphynx',hab:'sandbox',feed:{fish:1},mint:1,vp:1,perk:'Sunbather: loves the sandbox, only needs fish.'},
+  russian:{n:'Russian Blue',hab:'quarry',feed:{fish:1,water:1},mint:1,vp:1,bonus:{stone:1},perk:'Rock napper: +1 stone when fed at home.'},
+  calico:{n:'Calico',hab:'any',feed:{fish:1,water:1},mint:1,vp:1,perk:'Free spirit: at home anywhere you live.'}
+};
+const NAMES=['Mochi','Biscuit','Noodle','Waffles','Tofu','Olive','Ziggy','Pumpkin','Sushi','Momo','Clementine','Pickle','Juniper','Bean','Socks','Marzipan'];
+const PCOL=['#7a56c8','#e0782b','#d23d5c'];
+
+let state=null,lastSeed=null,lastRoll=0;
+const $=id=>document.getElementById(id);
+const r6=()=>1+Math.floor(Math.random()*6);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const P=()=>state.players;
+const cur=()=>state.players[state.cur];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const f1=n=>Math.round(n*10)/10;
+
+/* ---------- board ---------- */
+function genBoard(){
+  const terr=shuffle([...Array(4).fill('forest'),...Array(4).fill('meadow'),...Array(4).fill('pond'),...Array(3).fill('spring'),...Array(3).fill('quarry'),'sandbox','sandbox']);
+  const tiles=[];
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)tiles.push({c,r,x:c*TW,y:r*TH,terr:terr[tiles.length],num:null,verts:[]});
+  const nums=[2,3,3,4,4,5,5,6,6,8,8,9,9,10,10,11,11,12];
+  const land=tiles.filter(t=>t.terr!=='sandbox');
+  const nb=(a,b)=>Math.abs(a.c-b.c)<=1&&Math.abs(a.r-b.r)<=1;
+  for(let tries=0;tries<2000;tries++){
+    shuffle(nums);land.forEach((t,i)=>t.num=nums[i]);
+    const hot=land.filter(t=>t.num===6||t.num===8);
+    if(!hot.some(a=>hot.some(b=>a!==b&&nb(a,b))))break;
+  }
+  const vid=(c,r)=>r*(COLS+1)+c;
+  const verts=[];
+  for(let r=0;r<=ROWS;r++)for(let c=0;c<=COLS;c++)verts.push({x:c*TW,y:r*TH,tiles:[],adj:[],edges:[]});
+  tiles.forEach((t,ti)=>{t.verts=[vid(t.c,t.r),vid(t.c+1,t.r),vid(t.c+1,t.r+1),vid(t.c,t.r+1)];t.verts.forEach(v=>verts[v].tiles.push(ti))});
+  const edges=[];
+  const addE=(a,b)=>{const id=edges.length;edges.push({a,b});verts[a].adj.push(b);verts[b].adj.push(a);verts[a].edges.push(id);verts[b].edges.push(id)};
+  for(let r=0;r<=ROWS;r++)for(let c=0;c<=COLS;c++){if(c<COLS)addE(vid(c,r),vid(c+1,r));if(r<ROWS)addE(vid(c,r),vid(c,r+1))}
+  return {kind:'rect',seed:Math.floor(Math.random()*1e9),tiles,verts,edges};
+}
+function makeDeck(){
+  const names=shuffle([...NAMES]);
+  return shuffle(Object.keys(BREEDS).flatMap(k=>[k,k])).map((b,i)=>({b,name:names[i],hunger:0,fed:false}));
+}
+function newGame(){
+  const b=genBoard();
+  const mk=(name,color,bot)=>({name,color,bot,res:{wood:0,stone:0,yarn:0,fish:0,water:0,mint:0},cats:[]});
+  state={b,players:[mk('You',PCOL[0],false),mk('Whiskers',PCOL[1],true),mk('Pepper',PCOL[2],true)],
+    bld:{},roads:{},dog:b.tiles.findIndex(t=>t.terr==='sandbox'),deck:makeDeck(),cur:0,phase:'setup',
+    setupStep:0,setupOrder:[0,1,2,2,1,0],setupSub:'bed',lastBed:null,mode:null,dice:null,rollId:0,log:[],family:null,winner:null,fresh:null,token:Math.random()};
+  log(null,'New island. Each player places 2 cat houses and 2 paths.');
+}
+function log(pi,m){state.log.unshift({p:pi,m});if(state.log.length>60)state.log.length=60}
+
+/* ---------- rules helpers ---------- */
+const total=p=>Object.values(p.res).reduce((a,b)=>a+b,0);
+function shortfall(p,cost){let s=0;for(const k in cost)s+=Math.max(0,cost[k]-p.res[k]);return s}
+const canAfford=(p,cost)=>shortfall(p,cost)<=p.res.mint;
+function pay(p,cost){let m=0;for(const k in cost){const use=Math.min(p.res[k],cost[k]);p.res[k]-=use;m+=cost[k]-use}p.res.mint-=m}
+function canBed(pi,v,setup){
+  if(state.bld[v])return false;
+  const V=state.b.verts[v];
+  if(V.adj.some(a=>state.bld[a]))return false;
+  return setup?true:V.edges.some(e=>state.roads[e]===pi);
+}
+function canPath(pi,e,setupV){
+  if(state.roads[e]!==undefined)return false;
+  const E=state.b.edges[e];
+  if(setupV!=null)return E.a===setupV||E.b===setupV;
+  return [E.a,E.b].some(v=>{const bd=state.bld[v];if(bd)return bd.o===pi;return state.b.verts[v].edges.some(x=>x!==e&&state.roads[x]===pi)});
+}
+const canCastle=(pi,v)=>{const b=state.bld[v];return b&&b.o===pi&&b.t==='bed'};
+const bedSpots=pi=>state.b.verts.map((_,i)=>i).filter(v=>canBed(pi,v,false));
+const pathSpots=pi=>state.b.edges.map((_,i)=>i).filter(e=>canPath(pi,e,null));
+const castleSpots=pi=>Object.keys(state.bld).map(Number).filter(v=>canCastle(pi,v));
+function terrainsOf(pi){
+  const s=new Set();
+  for(const v in state.bld)if(state.bld[v].o===pi)state.b.verts[v].tiles.forEach(t=>s.add(state.b.tiles[t].terr));
+  return s;
+}
+function atHome(pi,c){const h=BREEDS[c.b].hab;const t=terrainsOf(pi);return h==='any'?t.size>0:t.has(h)}
+const happy=(pi,c)=>c.hunger<=1&&atHome(pi,c);
+const happyCount=pi=>P()[pi].cats.filter(c=>happy(pi,c)).length;
+const guarded=pi=>P()[pi].cats.some(c=>BREEDS[c.b].guard&&happy(pi,c));
+function vp(pi){
+  let s=0;
+  for(const v in state.bld){const b=state.bld[v];if(b.o===pi)s+=b.t==='castle'?2:1}
+  P()[pi].cats.forEach(c=>{if(happy(pi,c))s+=BREEDS[c.b].vp});
+  if(state.family===pi)s+=2;
+  return s;
+}
+function updateFamily(){
+  const counts=P().map((_,i)=>happyCount(i));
+  let h=state.family;
+  if(h!==null&&(counts[h]<3||counts.some((c,i)=>i!==h&&c>counts[h])))h=null;
+  if(h===null){const m=Math.max(...counts);if(m>=3&&counts.filter(c=>c===m).length===1)h=counts.indexOf(m)}
+  if(h!==state.family){
+    if(h!==null)log(h,'now has the Biggest Cat Family (+2 points).');
+    else log(state.family,'lost the Biggest Cat Family.');
+    state.family=h;
+  }
+}
+function checkWin(){
+  if(state.winner==null&&state.phase!=='setup'&&vp(state.cur)>=WIN){state.winner=state.cur;log(state.cur,`reached ${WIN} points and wins!`)}
+  return state.winner!=null;
+}
+function afterAction(){updateFamily();checkWin();render()}
+
+/* ---------- actions ---------- */
+function placeBed(pi,v,setup){
+  state.bld[v]={o:pi,t:'bed'};state.fresh='v'+v;
+  if(setup&&state.setupStep>=3){
+    const g=[];
+    state.b.verts[v].tiles.forEach(t=>{const r=TERR[state.b.tiles[t].terr].res;if(r){P()[pi].res[r]++;g.push(ic(r))}});
+    log(pi,`built a cat house and collected ${g.join('')||'nothing'}.`);
+  } else log(pi,'built a cat house.');
+}
+function doRoll(){
+  const d1=r6(),d2=r6(),s=d1+d2;state.dice=[d1,d2];state.rollId++;
+  log(state.cur,`rolled ${s}.`);
+  if(s===7){
+    P().forEach((q,i)=>{const t=total(q);if(t>7){const k=Math.floor(t/2);discard(q,k);log(i,`dropped ${k} cards, startled by the Stray Dog.`)}});
+    state.phase='dog';if(!cur().bot)state.mode='dog';
+  } else {produce(s);state.phase='main'}
+  if(d1===d2)catShow();
+}
+function discard(q,k){
+  for(let i=0;i<k;i++){
+    let best=null;RES.forEach(r=>{if(q.res[r]>0&&(!best||q.res[r]>q.res[best]))best=r});
+    if(!best&&q.res.mint>0)best='mint';
+    if(best)q.res[best]--;
+  }
+}
+function produce(n){
+  const gains=P().map(()=>[]);
+  state.b.tiles.forEach((t,ti)=>{
+    if(t.num!==n||ti===state.dog)return;
+    const r=TERR[t.terr].res;
+    t.verts.forEach(v=>{const b=state.bld[v];if(!b)return;const k=b.t==='castle'?2:1;P()[b.o].res[r]+=k;for(let i=0;i<k;i++)gains[b.o].push(ic(r))});
+  });
+  gains.forEach((g,i)=>{if(g.length)log(i,`collected ${g.join('')}.`)});
+}
+function catShow(){
+  const c=P().map((_,i)=>happyCount(i)),m=Math.max(...c);
+  if(m<1){log(null,'Doubles! Cat Show, but nobody has a happy cat to enter.');return}
+  const w=c.map((x,i)=>x===m?i:-1).filter(i=>i>=0),amt=w.length===1?2:1;
+  w.forEach(i=>{P()[i].res.mint+=amt;log(i,`won the Cat Show (doubles) and got ${ic('mint').repeat(amt)}.`)});
+}
+function moveDog(t){
+  state.dog=t;
+  log(state.cur,`sent the Stray Dog to ${TERR[state.b.tiles[t].terr].label}${state.b.tiles[t].num?' '+state.b.tiles[t].num:''}.`);
+  const vic=new Set();
+  state.b.tiles[t].verts.forEach(v=>{const b=state.bld[v];if(b&&b.o!==state.cur)vic.add(b.o)});
+  const cands=[...vic].filter(i=>total(P()[i])>0);
+  cands.filter(i=>guarded(i)).forEach(i=>log(i,'’s Siamese chased the dog off. Nothing stolen.'));
+  const ok=cands.filter(i=>!guarded(i)).sort((a,b)=>total(P()[b])-total(P()[a]));
+  if(ok.length){
+    const v=P()[ok[0]],bag=[];
+    for(const k in v.res)for(let i=0;i<v.res[k];i++)bag.push(k);
+    const k=bag[Math.floor(Math.random()*bag.length)];
+    v.res[k]--;cur().res[k]++;
+    log(state.cur,`’s dog snatched ${state.cur===0||ok[0]===0?ic(k):'a card'} from ${v.name}.`);
+  }
+  state.phase='main';state.mode=null;
+}
+function feedCat(pi,idx){
+  const p=P()[pi],c=p.cats[idx],B=BREEDS[c.b];
+  if(c.fed||!canAfford(p,B.feed))return false;
+  pay(p,B.feed);c.hunger=0;c.fed=true;
+  if(atHome(pi,c)){
+    p.res.mint+=B.mint;let extra='';
+    if(B.bonus)for(const k in B.bonus){p.res[k]+=B.bonus[k];extra+=ic(k)}
+    log(pi,`fed ${c.name} the ${B.n}: purring, +${ic('mint').repeat(B.mint)}${extra}.`);
+  } else log(pi,`fed ${c.name} the ${B.n}, but it misses its ${TERR[B.hab].label}. No catmint.`);
+  return true;
+}
+function adopt(pi){
+  const p=P()[pi];
+  if(!state.deck.length||!canAfford(p,COST.cat))return false;
+  pay(p,COST.cat);
+  const c=state.deck.pop();c.hunger=0;c.fed=true;p.cats.push(c);
+  log(pi,`adopted ${c.name} the ${BREEDS[c.b].n}.`);
+  return true;
+}
+function endTurn(){
+  const pi=state.cur,p=cur();
+  p.cats=p.cats.filter(c=>{
+    if(!c.fed){c.hunger++;if(c.hunger>=3){log(pi,`: ${c.name} the ${BREEDS[c.b].n} got too hungry and wandered off.`);c.hunger=0;state.deck.unshift(c);return false}}
+    c.fed=false;return true;
+  });
+  updateFamily();
+  state.cur=(state.cur+1)%3;state.phase='roll';state.mode=null;
+  render();
+  if(cur().bot)runBot();
+}
+
+/* ---------- setup ---------- */
+function setupNext(){
+  if(state.setupStep>=6){state.phase='roll';state.cur=0;state.mode=null;log(null,'Setup done. Your turn: roll the dice.');render();if(cur().bot)runBot();return}
+  state.cur=state.setupOrder[state.setupStep];
+  if(state.setupSub!=='path')state.setupSub='bed';
+  if(cur().bot){state.mode=null;render();botSetup()}
+  else{state.mode=state.setupSub==='path'?'setupPath':'setupBed';render()}
+}
+
+/* ---------- bots ---------- */
+function vscore(pi,v){
+  const have=terrainsOf(pi),seen=new Set();let s=0;
+  state.b.verts[v].tiles.forEach(t=>{
+    const T=state.b.tiles[t];
+    if(T.terr==='sandbox'){s+=.5;return}
+    s+=PIPS(T.num);
+    if(!seen.has(T.terr)){seen.add(T.terr);s+=have.has(T.terr)?.4:1.5}
+    if(T.terr==='pond'||T.terr==='spring')s+=.4;
+  });
+  return s+Math.random()*.2;
+}
+function bestBy(arr,f){let b=null,bs=-1e9;arr.forEach(x=>{const s=f(x);if(s>bs){bs=s;b=x}});return b}
+function edgeScore(pi,e){
+  const E=state.b.edges[e];let best=0;
+  [E.a,E.b].forEach(v=>{
+    if(canBed(pi,v,true))best=Math.max(best,vscore(pi,v));
+    state.b.verts[v].adj.forEach(a=>{if(a!==E.a&&a!==E.b&&canBed(pi,a,true))best=Math.max(best,vscore(pi,a)*.7)});
+  });
+  return best+Math.random()*.3;
+}
+async function botSetup(){
+  const tok=state.token;await sleep(550);if(tok!==state.token)return;
+  const pi=state.cur;
+  if(state.setupSub!=='path'){
+    const vs=state.b.verts.map((_,i)=>i).filter(v=>canBed(pi,v,true));
+    const v=bestBy(vs,x=>vscore(pi,x));placeBed(pi,v,true);state.lastBed=v;state.setupSub='path';render();
+    await sleep(380);if(tok!==state.token)return;
+  }
+  const es=state.b.verts[state.lastBed].edges.filter(e=>canPath(pi,e,state.lastBed));
+  const e=bestBy(es,x=>edgeScore(pi,x));state.roads[e]=pi;state.fresh='e'+e;
+  state.setupSub='bed';state.setupStep++;setupNext();
+}
+function botDog(){
+  const pi=state.cur,lead=bestBy([0,1,2].filter(i=>i!==pi),i=>vp(i));
+  const t=bestBy(state.b.tiles.map((_,i)=>i).filter(i=>i!==state.dog),ti=>{
+    const T=state.b.tiles[ti];let s=0;
+    T.verts.forEach(v=>{const b=state.bld[v];if(!b)return;if(b.o===pi)s-=10;else s+=PIPS(T.num)*(b.t==='castle'?2:1)*(b.o===lead?1.5:1)});
+    return s+Math.random()*.1;
+  });
+  moveDog(t);
+}
+function botAct(ctx){
+  const pi=state.cur,p=cur();
+  const beds=bedSpots(pi),cs=castleSpots(pi);
+  if(cs.length&&canAfford(p,COST.castle)){const v=bestBy(cs,x=>vscore(pi,x));pay(p,COST.castle);state.bld[v].t='castle';state.fresh='v'+v;log(pi,'upgraded a house to a cat tower.');return true}
+  if(beds.length&&canAfford(p,COST.bed)){const v=bestBy(beds,x=>vscore(pi,x));pay(p,COST.bed);placeBed(pi,v,false);return true}
+  if(state.deck.length&&p.cats.length<4&&shortfall(p,COST.cat)===0&&(!beds.length||p.res.fish>=2)){adopt(pi);return true}
+  const roadsN=Object.values(state.roads).filter(o=>o===pi).length;
+  if(!beds.length&&roadsN<15&&canAfford(p,COST.path)){const ps=pathSpots(pi);if(ps.length){const e=bestBy(ps,x=>edgeScore(pi,x));pay(p,COST.path);state.roads[e]=pi;state.fresh='e'+e;log(pi,'built a path.');return true}}
+  if(ctx.trades<2){
+    const target=beds.length?COST.bed:cs.length?COST.castle:COST.path;
+    const need=RES.find(r=>(target[r]||0)>p.res[r]);
+    const give=bestBy(RES.filter(r=>p.res[r]-(target[r]||0)>=4),r=>p.res[r]);
+    if(need&&give){p.res[give]-=4;p.res[need]++;ctx.trades++;log(pi,`traded ${ic(give).repeat(4)} for ${ic(need)} with the bank.`);return true}
+  }
+  return false;
+}
+async function runBot(){
+  const tok=state.token,pi=state.cur,p=cur();
+  const step=async ms=>{render();await sleep(ms);return tok===state.token&&state.winner==null};
+  if(!await step(650))return;
+  if(state.phase==='roll'){doRoll();if(!await step(700))return}
+  if(state.phase==='dog'){botDog();if(!await step(600))return}
+  p.cats.forEach((c,i)=>{
+    if(c.fed)return;const B=BREEDS[c.b];
+    if(shortfall(p,B.feed)===0&&(c.hunger>=1||atHome(pi,c)))feedCat(pi,i);
+    else if(c.hunger>=2&&canAfford(p,B.feed))feedCat(pi,i);
+  });
+  updateFamily();if(checkWin()){render();return}
+  if(!await step(400))return;
+  const ctx={trades:0};
+  for(let i=0;i<10;i++){
+    if(!botAct(ctx))break;
+    updateFamily();if(checkWin()){render();return}
+    if(!await step(480))return;
+  }
+  endTurn();
+}
+
+/* ---------- art: terrain ---------- */
+function scatter(R,n,md,W,H,avoid){
+  const out=[],cx=W/2,cy=H/2;
+  for(let k=0;k<n*40&&out.length<n;k++){
+    const x=10+R()*(W-20),y=12+R()*(H-22);
+    if(Math.hypot((x-cx)*.9,y-cy)<avoid)continue;
+    if(out.some(p=>Math.hypot(p[0]-x,p[1]-y)<md))continue;
+    out.push([f1(x),f1(y)]);
+  }
+  return out.sort((a,b)=>a[1]-b[1]);
+}
+const tuft=(x,y,c)=>`<path d="M${x-4} ${y}q-1-5-3-8M${x} ${y}q0-6 1-10M${x+4} ${y}q1-5 4-7" stroke="${c}" stroke-width="1.6" fill="none" stroke-linecap="round"/>`;
+function drawTerrain(t,ti){
+  const R=rng(state.b.seed+ti*7919),W=TW-IN*2,H=TH-IN*2,cx=W/2,cy=H/2;
+  let s=`<rect width="${W}" height="${H}" fill="url(#g-${t.terr==='pond'?'grass':t.terr==='spring'?'moss':t.terr==='sandbox'?'sand':t.terr})"/>`;
+  if(t.terr==='forest'){
+    for(let i=0;i<4;i++)s+=`<ellipse cx="${f1(R()*W)}" cy="${f1(R()*H)}" rx="${f1(10+R()*14)}" ry="${f1(6+R()*8)}" fill="#2f6a35" opacity=".18"/>`;
+    scatter(R,8,19,W,H,27).forEach(([x,y])=>{
+      const sc=f1(.75+R()*.45);
+      s+=`<ellipse cx="${x}" cy="${f1(y+9*sc)}" rx="${f1(9*sc)}" ry="${f1(3*sc)}" fill="#000" opacity=".2"/>`;
+      s+=R()<.62
+        ?`<g transform="translate(${x} ${y}) scale(${sc})"><rect x="-1.8" y="3" width="3.6" height="7" fill="#6b4426"/><path d="M0-18L10-4H-10Z" fill="#2a6537"/><path d="M0-11L12 5H-12Z" fill="#225a31"/><path d="M0-18L-10-4H0ZM0-11L-12 5H0Z" fill="#3f8a4c"/></g>`
+        :`<g transform="translate(${x} ${y}) scale(${sc})"><rect x="-1.8" y="2" width="3.6" height="8" fill="#6b4426"/><circle cy="-4" r="9.5" fill="#3a8541"/><circle cx="-3" cy="-7" r="5.5" fill="#5cab52"/><circle cx="4" cy="-1" r="2" fill="#e05050"/></g>`;
+    });
+  } else if(t.terr==='meadow'){
+    scatter(R,12,12,W,H,25).forEach(([x,y])=>s+=tuft(x,y,'#7ea443'));
+    scatter(R,9,9,W,H,25).forEach(([x,y])=>{const c=['#fff','#c8b4f5','#ffd6e6'][Math.floor(R()*3)];s+=`<g transform="translate(${x} ${y})">${[0,72,144,216,288].map(a=>`<circle cx="${f1(2.2*Math.cos(a*Math.PI/180))}" cy="${f1(2.2*Math.sin(a*Math.PI/180))}" r="1.6" fill="${c}"/>`).join('')}<circle r="1.2" fill="#f4c430"/></g>`});
+    scatter(R,2,34,W,H,30).forEach(([x,y],i)=>{
+      const c=i?['#5b9bd5','#3d78b5','#a9c8ef']:['#ec6f9f','#c84b80','#ffc2d9'];
+      s+=`<g transform="translate(${x} ${y})"><path d="M6 5q8 3 5 9t6 6" stroke="${c[1]}" stroke-width="1.4" fill="none"/><ellipse cy="8" rx="9" ry="2.6" fill="#000" opacity=".18"/><circle r="8" fill="${c[0]}"/><path d="M-7-2Q0-7 7-3M-7.5 2Q0-3 7.5 1M-5 6Q0 2 6 5M-2-7.5Q-6 0-1 7.8" stroke="${c[2]}" stroke-width="1.3" fill="none" stroke-linecap="round"/></g>`;
+    });
+  } else if(t.terr==='pond'){
+    s+=`<ellipse cx="${cx}" cy="${cy+2}" rx="${cx-5}" ry="${cy-6}" fill="#cfe6a3"/><ellipse cx="${cx}" cy="${cy+2}" rx="${cx-8}" ry="${cy-9}" fill="url(#g-water)"/>`;
+    for(let i=0;i<3;i++)s+=`<ellipse cx="${f1(18+R()*(W-36))}" cy="${f1(18+R()*(H-36))}" rx="${f1(6+R()*7)}" ry="${f1(2+R()*2)}" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="1.2"/>`;
+    [[8,8],[W-10,10],[10,H-8],[W-8,H-6]].forEach(([x,y])=>{if(R()<.7)s+=tuft(x,y,'#4f8a3a')});
+    scatter(R,3,18,W,H,28).filter(([x,y])=>((x-cx)/(cx-12))**2+((y-cy)/(cy-12))**2<1).forEach(([x,y])=>{
+      s+=`<g transform="translate(${x} ${y}) rotate(${Math.floor(R()*360)})"><path d="M0 0L7-3A7.5 7.5 0 1 0 7.5 1Z" fill="#4f9a48"/><path d="M0 0L-5 3" stroke="#3b7c38" stroke-width=".8"/></g>`;
+      if(R()<.4)s+=`<circle cx="${x+2}" cy="${y-2}" r="2.4" fill="#f7a8c8"/>`;
+    });
+    for(let i=0;i<2;i++){const a=R()*Math.PI*2,x=f1(cx+Math.cos(a)*(cx-26)),y=f1(cy+Math.sin(a)*(cy-22));
+      s+=`<g transform="translate(${x} ${y}) rotate(${Math.floor(R()*360)})"><path d="M-9 0Q-2-6 7 0Q-2 6-9 0Z" fill="${i?'#fff3e6':'#f2853b'}"/><path d="M6 0L12-4 11 0 12 4Z" fill="${i?'#fff3e6':'#f2853b'}"/>${i?'<circle cx="-2" cy="0" r="2" fill="#f2853b"/>':''}<circle cx="-5" cy="-1" r=".9" fill="#222"/></g>`}
+  } else if(t.terr==='spring'){
+    const x1=f1(20+R()*(W-40)),x2=f1(20+R()*(W-40));
+    const d=`M${x1} -6C${x1+25} ${H*.28} ${cx-30} ${H*.4} ${cx} ${cy}S${x2-20} ${H*.82} ${x2} ${H+6}`;
+    s+=`<path d="${d}" stroke="#4a8e66" stroke-width="22" fill="none" stroke-linecap="round" opacity=".5"/><path d="${d}" stroke="#3a9fc0" stroke-width="15" fill="none"/><path d="${d}" stroke="#8ee0f0" stroke-width="9" fill="none"/><path d="${d}" stroke="#fff" stroke-width="1.6" fill="none" stroke-dasharray="3 9" opacity=".85"/>`;
+    scatter(R,7,13,W,H,28).forEach(([x,y])=>{const r=f1(3+R()*4);s+=`<ellipse cx="${x}" cy="${y}" rx="${r}" ry="${f1(r*.75)}" fill="#8b8f98"/><ellipse cx="${f1(x-r*.3)}" cy="${f1(y-r*.3)}" rx="${f1(r*.5)}" ry="${f1(r*.35)}" fill="#b6bac2"/>`});
+    scatter(R,4,14,W,H,26).forEach(([x,y])=>s+=tuft(x,y,'#3f8a55'));
+    for(let i=0;i<3;i++){const x=f1(10+R()*(W-20)),y=f1(10+R()*(H-20));s+=`<path d="M${x} ${y-4}L${x+1} ${y-1}L${x+4} ${y}L${x+1} ${y+1}L${x} ${y+4}L${x-1} ${y+1}L${x-4} ${y}L${x-1} ${y-1}Z" fill="#fff" opacity=".9"/>`}
+  } else if(t.terr==='quarry'){
+    for(let i=1;i<4;i++){const y=f1(H*i/4+R()*6-3);s+=`<path d="M-5 ${y}q${W/4} -6 ${W/2} 0t${W/2} 0" stroke="#fff" stroke-opacity=".22" stroke-width="5" fill="none"/><path d="M-5 ${y+4}q${W/4} -6 ${W/2} 0t${W/2} 0" stroke="#5f586e" stroke-opacity=".3" stroke-width="2" fill="none"/>`}
+    scatter(R,10,8,W,H,26).forEach(([x,y])=>s+=`<circle cx="${x}" cy="${y}" r="${f1(1.2+R()*1.5)}" fill="#7a7389"/>`);
+    scatter(R,5,22,W,H,30).forEach(([x,y])=>{
+      const r=7+R()*6,pts=[];for(let k=0;k<7;k++){const a=k/7*Math.PI*2-Math.PI/2,rr=r*(.75+R()*.35);pts.push([f1(x+Math.cos(a)*rr),f1(y+Math.sin(a)*rr*.8)])}
+      s+=`<ellipse cx="${x}" cy="${f1(y+r*.75)}" rx="${f1(r)}" ry="${f1(r*.25)}" fill="#000" opacity=".2"/><polygon points="${pts.map(p=>p.join(',')).join(' ')}" fill="#8a8499"/><polygon points="${[pts[5],pts[6],pts[0],pts[1],[x,y]].map(p=>p.join(',')).join(' ')}" fill="#c1bccd"/><polygon points="${[pts[1],pts[2],[x,y]].map(p=>p.join(',')).join(' ')}" fill="#a39db2"/>`;
+    });
+  } else if(t.terr==='sandbox'){
+    for(let i=0;i<40;i++)s+=`<circle cx="${f1(R()*W)}" cy="${f1(R()*H)}" r="${f1(.6+R()*.9)}" fill="#c49a4e" opacity=".45"/>`;
+    s+=`<rect x="4" y="4" width="${W-8}" height="${H-8}" rx="7" fill="none" stroke="#a46d39" stroke-width="6"/><rect x="4" y="4" width="${W-8}" height="${H-8}" rx="7" fill="none" stroke="#d29a5c" stroke-width="2"/>`;
+    const sx=W-22,sy=20;
+    s+=`<g transform="translate(${sx} ${sy})">${[0,45,90,135,180,225,270,315].map(a=>`<path d="M0-9.5V-13" transform="rotate(${a})" stroke="#f6b52e" stroke-width="2" stroke-linecap="round"/>`).join('')}<circle r="7" fill="#ffd34d"/><circle cx="-2" cy="-2" r="2.5" fill="#fff4b8"/></g>`;
+    const ang=-25+R()*50;
+    [[20,H-22],[32,H-34],[22,H-46]].forEach(([x,y],i)=>{s+=`<g transform="translate(${x+(i%2?6:0)} ${y}) rotate(${f1(ang)})" fill="#b98a3e" opacity=".7"><ellipse cy="2" rx="3.6" ry="3"/><circle cx="-3.6" cy="-2.6" r="1.4"/><circle cx="-1.2" cy="-4.4" r="1.4"/><circle cx="1.4" cy="-4.4" r="1.4"/><circle cx="3.8" cy="-2.6" r="1.4"/></g>`});
+    s+=`<g transform="translate(${W-24} ${H-24})"><path d="M-6-6H6L4 6H-4Z" fill="#e2524f"/><path d="M-6-6H6" stroke="#b33a38" stroke-width="2"/><path d="M-4-6Q0-14 4-6" stroke="#555" stroke-width="1.2" fill="none"/><path d="M8 4L14-8" stroke="#3a7fc4" stroke-width="2.4" stroke-linecap="round"/></g>`;
+  }
+  // gloss + border
+  s+=`<rect width="${W}" height="${H}" fill="url(#g-gloss)"/>`;
+  return `<clipPath id="ct${ti}"><rect width="${W}" height="${H}" rx="12"/></clipPath><g transform="translate(${t.x+IN} ${t.y+IN})"><g clip-path="url(#ct${ti})">${s}</g><rect width="${W}" height="${H}" rx="12" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="2"/><rect x="-1" y="-1" width="${W+2}" height="${H+2}" rx="13" fill="none" stroke="#000" stroke-opacity=".15" stroke-width="1"/></g>`;
+}
+function drawToken(t){
+  const x=t.x+TW/2,y=t.y+TH/2;
+  if(!t.num)return '';
+  const red=t.num===6||t.num===8,c=red?'#c0303f':'#2b2234';
+  return `<g filter="url(#sh)"><circle cx="${x}" cy="${y}" r="17" fill="url(#g-token)" stroke="#cdb98a" stroke-width="1.5"/></g><circle cx="${x}" cy="${y}" r="13.5" fill="none" stroke="#d9c9a0" stroke-width=".8"/>
+  <text x="${x}" y="${y+4}" text-anchor="middle" font-family="DM Mono, monospace" font-size="${red?16:15}" font-weight="700" fill="${c}">${t.num}</text>
+  ${Array.from({length:PIPS(t.num)},(_,i)=>`<circle cx="${f1(x+(i-(PIPS(t.num)-1)/2)*3.4)}" cy="${y+10}" r="1.15" fill="${c}"/>`).join('')}`;
+}
+
+/* ---------- art: pieces ---------- */
+function shade(hex,amt){const n=parseInt(hex.slice(1),16);let r=n>>16,g=n>>8&255,b=n&255;const f=v=>Math.max(0,Math.min(255,Math.round(amt<0?v*(1+amt):v+(255-v)*amt)));return `rgb(${f(r)},${f(g)},${f(b)})`}
+function house(x,y,col,castle,fresh){
+  const dk=shade(col,-.35),lt=shade(col,.25);
+  if(!castle)return `<g transform="translate(${x} ${y})"><g class="${fresh?'pop':''}" filter="url(#sh)">
+    <path d="M-12 10V-3L-11-14-4.5-7.5H4.5L11-14 12-3V10Q12 12 10 12H-10Q-12 12-12 10Z" fill="${col}" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M-9.5-10.5L-5-7.5H-9.6ZM9.5-10.5L5-7.5H9.6Z" fill="#ffc6d9"/>
+    <path d="M-10.5 -2H10.5" stroke="${lt}" stroke-width="2"/>
+    <path d="M-4.5 12V5.5A4.5 4.5 0 0 1 4.5 5.5V12Z" fill="${dk}"/>
+    <circle cx="-5" cy="-1" r="1.8" fill="#fff"/><circle cx="5" cy="-1" r="1.8" fill="#fff"/><circle cx="-5" cy="-.8" r=".8" fill="#2b2234"/><circle cx="5" cy="-.8" r=".8" fill="#2b2234"/></g></g>`;
+  return `<g transform="translate(${x} ${y})"><g class="${fresh?'pop':''}" filter="url(#sh)">
+    <path d="M-16 15V0H16V15Q16 17 14 17H-14Q-16 17-16 15Z" fill="${col}" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/>
+    <rect x="-18" y="-3" width="36" height="5" rx="2.5" fill="#f2c447" stroke="#fff" stroke-width="1.5"/>
+    <path d="M-10-3V-13L-9.5-24-3.5-18H3.5L9.5-24 10-13V-3Z" fill="${col}" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M-8-20.5L-4.5-17.8H-8.2ZM8-20.5L4.5-17.8H8.2Z" fill="#ffc6d9"/>
+    <path d="M-5 -29l2.5 3 2.5-4 2.5 4 2.5-3-1 5h-8Z" fill="#f2c447" stroke="#fff" stroke-width="1"/>
+    <circle cx="-4.2" cy="-12" r="1.8" fill="#fff"/><circle cx="4.2" cy="-12" r="1.8" fill="#fff"/><circle cx="-4.2" cy="-11.8" r=".8" fill="#2b2234"/><circle cx="4.2" cy="-11.8" r=".8" fill="#2b2234"/>
+    <path d="M-5 17V9A5 5 0 0 1 5 9V17Z" fill="${dk}"/><path d="M-12 6h3M9 6h3" stroke="${lt}" stroke-width="2" stroke-linecap="round"/></g></g>`;
+}
+function dogBadge(x,y){
+  return `<g transform="translate(${x} ${y})" filter="url(#sh)" pointer-events="none">
+    <circle r="18" fill="#3a2a22" stroke="#fff" stroke-width="2.5"/>
+    <ellipse cx="-9" cy="-1" rx="4.5" ry="8" fill="#7a4a26" transform="rotate(20 -9 -1)"/><ellipse cx="9" cy="-1" rx="4.5" ry="8" fill="#7a4a26" transform="rotate(-20 9 -1)"/>
+    <circle cy="1" r="9.5" fill="#c98a4b"/><ellipse cy="5.5" rx="5.5" ry="4" fill="#ecd2ac"/>
+    <circle cx="-3.5" cy="-1" r="1.4" fill="#1e1410"/><circle cx="3.5" cy="-1" r="1.4" fill="#1e1410"/>
+    <ellipse cy="3.6" rx="2.2" ry="1.5" fill="#1e1410"/><path d="M0 5v2.2M-2 7.4q2 1.4 4 0" stroke="#1e1410" stroke-width=".9" fill="none"/>
+    <path d="M-3-6.5q3-2 6 0" stroke="#8a5a32" stroke-width="1.2" fill="none"/></g>`;
+}
+const FACES={
+  tabby:{fur:'#e6a052',ear:'#ffc2a6',eye:'#8cc63f',mark:'tabby',dark:'#b8692a'},
+  maine:{fur:'#8a5a3a',ear:'#e8a990',eye:'#d9b23a',mark:'ruff',dark:'#5b3a24',light:'#c9a07c'},
+  siamese:{fur:'#f2e3c8',ear:'#4a3528',eye:'#58a6e8',mark:'points',dark:'#5b4234'},
+  bengal:{fur:'#e3a54f',ear:'#f2b9a0',eye:'#b6d34a',mark:'spots',dark:'#6b4220'},
+  persian:{fur:'#f7f3ec',ear:'#f6c6cf',eye:'#e9932b',mark:'ruff',dark:'#e2dbcf',light:'#ffffff'},
+  sphynx:{fur:'#ebbcab',ear:'#e29d8d',eye:'#9fd06a',mark:'wrinkle',dark:'#c98e7c'},
+  russian:{fur:'#8e9bab',ear:'#c7a3ad',eye:'#5fc77a',mark:'none',dark:'#6d7989'},
+  calico:{fur:'#fbf7f0',ear:'#f6bccb',eye:'#e8b43a',mark:'calico',dark:'#2b2234'}
+};
+function catFace(b,col){
+  const F=b==='player'?{fur:col,ear:'#ffc6d9',eye:'#fff',mark:'none',dark:shade(col,-.3)}:FACES[b];
+  const head='M7 27C7 17 9 10 11 4.5L19.5 12C22 11.2 26 11.2 28.5 12L37 4.5C39 10 41 17 41 27C41 37 33 43 24 43C15 43 7 37 7 27Z';
+  let m='';
+  if(F.mark==='ruff')m+=`<path d="M8 30l-3 4 4 0-2 4 5-1 0 4 4-2 2 4 3-3 3 4 3-4 3 3 2-4 4 2 0-4 5 1-2-4 4 0-3-4" fill="${F.light}" stroke="${F.dark}" stroke-width=".6"/>`;
+  m=`<path d="${head}" fill="${F.fur}" stroke="${F.dark}" stroke-width="1.2"/>`+m;
+  if(F.mark==='tabby')m+=`<path d="M24 13v6M20 14l1.5 5M28 14l-1.5 5M8.5 24h5M8.5 28h4.5M39.5 24h-5M39.5 28h-4.5" stroke="${F.dark}" stroke-width="2" stroke-linecap="round"/>`;
+  if(F.mark==='points')m+=`<path d="M11 4.5L19.5 12 14 16ZM37 4.5L28.5 12 34 16Z" fill="${F.ear}"/><ellipse cx="24" cy="32" rx="9" ry="7.5" fill="#8a6a54" opacity=".75"/>`;
+  if(F.mark==='spots')m+=[[15,17],[33,17],[11,30],[37,30],[20,15],[28,15]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="2" fill="none" stroke="${F.dark}" stroke-width="1.3"/>`).join('');
+  if(F.mark==='calico')m+=`<path d="M11 4.5L19.5 12C17 16 12 20 7.5 22 7.5 15 9 9 11 4.5Z" fill="#e8913b"/><path d="M37 4.5L28.5 12C30 15 34 17 40 19 40 13 38.5 8 37 4.5Z" fill="#2b2234"/><path d="M33 34c3 0 6-2 7.5-5-1 5-4 9-8 11Z" fill="#e8913b"/>`;
+  if(F.mark==='wrinkle')m+=`<path d="M20 15q4-2 8 0M19 18q5-2 10 0" stroke="${F.dark}" stroke-width="1" fill="none"/>`;
+  if(F.mark!=='points')m+=`<path d="M12.5 9L18 13 14 16ZM35.5 9L30 13 34 16Z" fill="${F.ear}"/>`;
+  const eye=(x)=>`<ellipse cx="${x}" cy="25" rx="3.2" ry="3.6" fill="${F.eye}"/><ellipse cx="${x}" cy="25" rx="1.1" ry="3" fill="#1e1626"/><circle cx="${x+1}" cy="23.6" r=".9" fill="#fff"/>`;
+  m+=eye(18)+eye(30);
+  m+=`<path d="M22 30.5h4l-2 2.6Z" fill="#e46f8e"/><path d="M24 33.1q-1.6 2.6-4 1.4M24 33.1q1.6 2.6 4 1.4" stroke="#3b2a33" stroke-width="1" fill="none" stroke-linecap="round"/>`;
+  m+=`<path d="M17 31L5 29.5M17 33L5.5 34.5M31 31L43 29.5M31 33L42.5 34.5" stroke="${b==='russian'||b==='maine'?'#e9e4ef':'#5c5060'}" stroke-width=".7" opacity=".7"/>`;
+  return `<svg class="face" viewBox="0 0 48 48" aria-hidden="true">${m}</svg>`;
+}
+
+/* ---------- render ---------- */
+function renderTerrain(){
+  if(lastSeed===state.b.seed&&$('terrain').childElementCount)return;
+  lastSeed=state.b.seed;
+  $('terrain').innerHTML=state.b.tiles.map((t,i)=>drawTerrain(t,i)).join('')+state.b.tiles.map(drawToken).join('');
+}
+function renderDyn(){
+  const b=state.b,m=state.mode,pi=state.cur,human=!cur().bot&&state.winner==null;
+  let h='';
+  const dt=b.tiles[state.dog];
+  h+=`<rect x="${dt.x+IN}" y="${dt.y+IN}" width="${TW-IN*2}" height="${TH-IN*2}" rx="12" fill="#1b1424" opacity=".32" pointer-events="none"/>`;
+  h+=dogBadge(dt.x+TW/2+(dt.num?32:0),dt.y+TH/2+(dt.num?-14:0));
+  if(human&&m==='dog')b.tiles.forEach((t,ti)=>{if(ti!==state.dog)h+=`<rect class="thint" data-t="${ti}" x="${t.x+IN+2}" y="${t.y+IN+2}" width="${TW-IN*2-4}" height="${TH-IN*2-4}" rx="11"><title>${TERR[t.terr].label}${t.num?' '+t.num:''}</title></rect>`});
+  for(const e in state.roads){
+    const E=b.edges[e],A=b.verts[E.a],B=b.verts[E.b],c=P()[state.roads[e]].color;
+    const k=.17,x1=f1(A.x+(B.x-A.x)*k),y1=f1(A.y+(B.y-A.y)*k),x2=f1(B.x+(A.x-B.x)*k),y2=f1(B.y+(A.y-B.y)*k);
+    const fr=state.fresh==='e'+e;
+    h+=`<g class="${fr?'pop':''}"><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="rgba(0,0,0,.25)" stroke-width="11" stroke-linecap="round" transform="translate(0 2)"/><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#fff" stroke-width="10" stroke-linecap="round"/><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="7" stroke-linecap="round"/><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#fff" stroke-opacity=".7" stroke-width="1.6" stroke-dasharray="3 5" stroke-linecap="round"/></g>`;
+  }
+  if(human&&(m==='path'||m==='setupPath')){
+    b.edges.forEach((E,e)=>{
+      if(!canPath(pi,e,m==='setupPath'?state.lastBed:null))return;
+      const A=b.verts[E.a],B=b.verts[E.b],k=.2;
+      const x1=f1(A.x+(B.x-A.x)*k),y1=f1(A.y+(B.y-A.y)*k),x2=f1(B.x+(A.x-B.x)*k),y2=f1(B.y+(A.y-B.y)*k);
+      h+=`<line class="ehit" data-e="${e}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/><line class="ehint" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
+    });
+  }
+  Object.keys(state.bld).map(Number).sort((a,b)=>a-b).forEach(v=>{
+    const V=b.verts[v],bd=state.bld[v];
+    h+=house(V.x,V.y,P()[bd.o].color,bd.t==='castle',state.fresh==='v'+v);
+  });
+  if(human){
+    let vs=[];
+    if(m==='setupBed')vs=b.verts.map((_,i)=>i).filter(v=>canBed(pi,v,true));
+    else if(m==='bed')vs=bedSpots(pi);
+    else if(m==='castle')vs=castleSpots(pi);
+    vs.forEach(v=>{const V=b.verts[v];h+=m==='castle'
+      ?`<circle class="chint" data-v="${v}" cx="${V.x}" cy="${V.y}" r="20"/>`
+      :`<circle class="vhint" data-v="${v}" cx="${V.x}" cy="${V.y}" r="8"/>`});
+  }
+  $('dyn').innerHTML=h;
+  state.fresh=null;
+}
+function statusText(){
+  const p=cur(),av=catFace('player',p.color);
+  if(state.winner!=null)return `${av}<span>${state.winner===0?'You win!':esc(P()[state.winner].name)+' wins.'}</span>`;
+  if(p.bot)return `${av}<span>${esc(p.name)} is taking a turn…</span>`;
+  const m=state.mode;let t;
+  if(state.phase==='setup'){
+    const n=state.setupStep<3?'first':'second';
+    t=m==='setupPath'?'Now lay a path from that house.':`Place your ${n} cat house on a glowing corner.${state.setupStep>=3?' It collects from the plots around it.':''}`;
+  }
+  else if(state.phase==='roll')t='Your turn. Roll the dice.';
+  else if(state.phase==='dog')t='You rolled 7. Click a plot to send the Stray Dog there.';
+  else if(m==='path')t='Pick a glowing edge for your path. Esc cancels.';
+  else if(m==='bed')t='Pick a glowing corner for your cat house. Esc cancels.';
+  else if(m==='castle')t='Pick one of your houses to upgrade. Esc cancels.';
+  else{const hungry=p.cats.filter(c=>!c.fed).length;t=`Build, adopt and feed your cats${hungry?` (${hungry} waiting for dinner)`:''}, then end your turn.`}
+  return `${av}<span>${t}</span>`;
+}
+function renderPanel(){
+  const me=P()[0],myTurn=state.cur===0&&state.winner==null,main=myTurn&&state.phase==='main';
+  let h=`<div class="sec"><h2>Players <small>${WIN} points to win</small></h2><div class="players">`;
+  P().forEach((p,i)=>{
+    const hc=happyCount(i),v=vp(i);
+    h+=`<div class="pl ${state.cur===i?'cur':''}" style="--pc:${p.color}"><div class="nm">${catFace('player',p.color)}${esc(p.name)}</div>
+      <div class="vp">${v}<small> pts</small></div><div class="vpbar"><b style="width:${Math.min(100,v/WIN*100)}%"></b></div>
+      <div class="meta">${total(p)} cards · ${hc}/${p.cats.length} happy cats${state.family===i?'<br>Biggest Cat Family':''}</div></div>`;
+  });
+  h+=`</div></div>`;
+  h+=`<div class="sec"><h2>Your hand <small>Catmint fills any gap</small></h2><div class="hand">`;
+  [...RES,'mint'].forEach(r=>{h+=`<div class="chip ${r==='mint'?'mint':''} ${me.res[r]?'':'zero'}"><svg aria-hidden="true"><use href="#r-${r}"/></svg><span class="ct">${me.res[r]}</span><span class="lb">${RN[r]}</span></div>`});
+  h+=`</div></div>`;
+  const hungry=me.cats.filter(c=>!c.fed).length;
+  const A=[
+    ['path','Path',COST.path,main&&canAfford(me,COST.path)&&pathSpots(0).length>0],
+    ['bed','Cat house',COST.bed,main&&canAfford(me,COST.bed)&&bedSpots(0).length>0],
+    ['castle','Cat tower',COST.castle,main&&canAfford(me,COST.castle)&&castleSpots(0).length>0],
+    ['cat',`Adopt a cat (${state.deck.length})`,COST.cat,main&&canAfford(me,COST.cat)&&state.deck.length>0]
+  ];
+  h+=`<div class="sec"><h2>Actions</h2><div class="acts">
+    <button class="btn primary" data-act="roll" ${myTurn&&state.phase==='roll'?'':'disabled'}>Roll dice</button>
+    <button class="btn" data-act="end" ${main?'':'disabled'}>End turn${main&&hungry?` · ${hungry} unfed`:''}</button>`;
+  A.forEach(([k,l,c,ok])=>{h+=`<button class="btn ${state.mode===k?'on':''}" data-act="${k}" ${ok||state.mode===k?'':'disabled'}><span>${l}</span><span class="cost">${icons(c)}</span></button>`});
+  h+=`</div><div class="trade"><span>Bank trade</span>
+    <select id="tGive" aria-label="Give 4">${RES.map(r=>`<option value="${r}" ${state.tg===r?'selected':''}>4 ${RN[r]}</option>`).join('')}</select>
+    <span>for</span>
+    <select id="tGet" aria-label="Get 1">${RES.map(r=>`<option value="${r}" ${state.tt===r?'selected':''}>1 ${RN[r]}</option>`).join('')}</select>
+    <button class="btn" data-act="trade" ${main?'':'disabled'}>Trade</button></div></div>`;
+  h+=`<div class="sec"><h2>Your cats <small>happy = fed lately + at home</small></h2>`;
+  if(!me.cats.length)h+=`<div class="empty">${catFace('calico')}<span>No cats yet. Adopt one for ${icons(COST.cat)}. Each cat wants food and water and has a favorite terrain. Keep a house next to it, feed it, and it gives you catmint and points.</span></div>`;
+  else{
+    h+=`<div class="cats">`;
+    me.cats.forEach((c,i)=>{
+      const B=BREEDS[c.b],home=atHome(0,c),hp=happy(0,c);
+      const st=c.hunger>=2?['bad','Starving']:hp?['good',`Happy · +${B.vp} pt`]:!home?['warn','Homesick']:['warn','Hungry'];
+      const canF=main&&!c.fed&&canAfford(me,B.feed);
+      h+=`<div class="cat ${hp?'happy':''} ${c.hunger>=2?'hungry':''}">
+        <div class="top">${catFace(c.b)}<div><div class="cn">${esc(c.name)}</div><div class="br">${B.n}</div></div></div>
+        <div class="row"><span>Home:</span>${B.hab==='any'?'<span>anywhere</span>':`<i class="sw" style="background:${TERR[B.hab].color}"></i><span>${TERR[B.hab].label}</span>`}</div>
+        <div class="row"><span class="pill ${st[0]}">${st[1]}</span><span class="hunger ${c.hunger>=2?'h2':''}" title="Hunger ${c.hunger}/3; leaves at 3">${[0,1,2].map(k=>`<i class="${k<c.hunger?'f':''}"></i>`).join('')}</span><span style="color:var(--muted)">${c.fed?'Fed this turn':'Hunger '+c.hunger+'/3'}</span></div>
+        <div class="perk">${B.perk}</div>
+        <button class="btn" data-act="feed" data-i="${i}" ${canF?'':'disabled'}>Feed ${icons(B.feed)}${home?` → ${ic('mint').repeat(B.mint)}`:''}</button>
+      </div>`;
+    });
+    h+=`</div>`;
+  }
+  h+=`</div>`;
+  h+=`<div class="sec"><h2>Island log</h2><div class="log">${state.log.map(l=>`<div><span class="d" style="background:${l.p==null?'var(--line)':P()[l.p].color}"></span><span>${l.p==null?'':`<b>${esc(P()[l.p].name)}</b>${l.m.startsWith('’')||l.m.startsWith(':')?'':' '}`}${l.m}</span></div>`).join('')}</div></div>`;
+  h+=`<details><summary>How to play</summary><div class="rules">
+    <ul>
+      <li><b>Setup:</b> place 2 cat houses and 2 paths on the lines between plots. Your second house collects one of each neighboring resource.</li>
+      <li><b>Each turn:</b> roll 2 dice. Every plot with that number pays its resource to the houses on its corners (towers get 2).</li>
+      <li><b>Build:</b> Path ${icons(COST.path)}, Cat house ${icons(COST.bed)} (1 pt), Cat tower ${icons(COST.castle)} (upgrade, 2 pts). Houses need a path and can’t sit on a neighboring corner of another house.</li>
+      <li><b>Cats:</b> adopt for ${icons(COST.cat)}. Each turn a cat wants food and water (${ic('fish')}${ic('water')}, some breeds differ). Feeding a cat whose home terrain touches one of your houses gives ${ic('mint')} catmint.</li>
+      <li><b>Hunger:</b> an unfed cat gains 1 hunger at the end of your turn. At 3 it wanders off. Feeding resets it to 0.</li>
+      <li><b>Happy cats</b> (hunger 0–1 and at home) are worth 1 point each. Three or more happy cats, more than anyone else, earns the Biggest Cat Family (+2).</li>
+      <li><b>Catmint</b> ${ic('mint')} counts as any resource and is spent automatically to cover what you’re missing.</li>
+      <li><b>Roll 7:</b> anyone holding more than 7 cards drops half. Move the Stray Dog: its plot stops producing and you steal a card from a neighbor.</li>
+      <li><b>Doubles:</b> Cat Show. Most happy cats wins 2 ${ic('mint')} (ties get 1 each).</li>
+      <li><b>Bank:</b> trade 4 of one resource for 1 of another.</li>
+    </ul>
+    <div class="breedgrid">${Object.entries(BREEDS).map(([k,B])=>`<div>${catFace(k)}<span><b>${B.n}</b><br>${B.hab==='any'?'Anywhere':TERR[B.hab].label}</span></div>`).join('')}</div>
+    </div></details>`;
+  $('panel').innerHTML=h;
+}
+const PIPMAP={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+function render(){
+  renderTerrain();renderDyn();renderPanel();
+  $('status').innerHTML=statusText();
+  if(state.dice){
+    const anim=state.rollId!==lastRoll;lastRoll=state.rollId;
+    const seven=state.dice[0]+state.dice[1]===7;
+    if(anim||!$('dice').childElementCount)$('dice').innerHTML=state.dice.map(d=>`<div class="die ${seven?'seven':''} ${anim?'roll':''}" aria-label="${d}">${[0,1,2,3,4,5,6,7,8].map(k=>`<i class="${PIPMAP[d].includes(k)?'on':''}"></i>`).join('')}</div>`).join('');
+  } else $('dice').innerHTML='';
+  $('legend').innerHTML=Object.values(TERR).map(t=>`<span><i class="sw" style="background:${t.color}"></i>${t.label}${t.res?' '+ic(t.res):''}</span>`).join('');
+  $('modal').innerHTML=state.winner!=null&&!state.hideModal?`<div class="modal"><div class="box">${catFace('player',P()[state.winner].color)}<h3>${state.winner===0?'You win!':esc(P()[state.winner].name)+' wins'}</h3><p>${state.winner===0?'Your cats are well fed and very smug about it.':'Their cats were a little better fed this time.'} Final score: ${P().map((p,i)=>esc(p.name)+' '+vp(i)).join(' · ')}.</p><div class="row"><button class="btn primary" data-act="new">Play again</button><button class="btn" data-act="close">Look at the board</button></div></div></div>`:'';
+}
+
+/* ---------- input ---------- */
+$('board').addEventListener('click',ev=>{
+  if(state.winner!=null||cur().bot)return;
+  const t=ev.target.closest('[data-v],[data-e],[data-t]');if(!t)return;
+  const m=state.mode,pi=state.cur,p=cur();
+  if(t.dataset.v!=null){
+    const v=+t.dataset.v;
+    if(m==='setupBed'&&canBed(pi,v,true)){placeBed(pi,v,true);state.lastBed=v;state.setupSub='path';state.mode='setupPath';render()}
+    else if(m==='bed'&&canBed(pi,v,false)&&canAfford(p,COST.bed)){pay(p,COST.bed);placeBed(pi,v,false);state.mode=null;afterAction()}
+    else if(m==='castle'&&canCastle(pi,v)&&canAfford(p,COST.castle)){pay(p,COST.castle);state.bld[v].t='castle';state.fresh='v'+v;log(pi,'upgraded a house to a cat tower.');state.mode=null;afterAction()}
+  } else if(t.dataset.e!=null){
+    const e=+t.dataset.e;
+    if(m==='setupPath'&&canPath(pi,e,state.lastBed)){state.roads[e]=pi;state.fresh='e'+e;log(pi,'laid a path.');state.setupSub='bed';state.setupStep++;setupNext()}
+    else if(m==='path'&&canPath(pi,e,null)&&canAfford(p,COST.path)){pay(p,COST.path);state.roads[e]=pi;state.fresh='e'+e;log(pi,'built a path.');state.mode=canAfford(p,COST.path)&&pathSpots(pi).length?'path':null;afterAction()}
+  } else if(t.dataset.t!=null&&m==='dog'){
+    const ti=+t.dataset.t;if(ti!==state.dog){moveDog(ti);afterAction()}
+  }
+});
+document.addEventListener('change',ev=>{if(ev.target.id==='tGive')state.tg=ev.target.value;if(ev.target.id==='tGet')state.tt=ev.target.value});
+document.addEventListener('click',ev=>{
+  const b=ev.target.closest('[data-act]');if(!b||b.disabled)return;
+  const a=b.dataset.act;
+  if(a==='new'){newGame();setupNext();return}
+  if(a==='close'){state.hideModal=true;render();return}
+  if(state.cur!==0||state.winner!=null)return;
+  const me=P()[0];
+  if(a==='roll'&&state.phase==='roll'){doRoll();afterAction()}
+  else if(a==='end'&&state.phase==='main'){endTurn()}
+  else if(['path','bed','castle'].includes(a)){state.mode=state.mode===a?null:a;render()}
+  else if(a==='cat'){if(adopt(0))afterAction()}
+  else if(a==='feed'){if(feedCat(0,+b.dataset.i))afterAction()}
+  else if(a==='trade'){
+    const g=$('tGive').value,t=$('tGet').value;
+    if(g===t){log(0,': pick two different resources to trade.');render();return}
+    if(me.res[g]<4){log(0,`: you need 4 ${RN[g].toLowerCase()} to trade.`);render();return}
+    me.res[g]-=4;me.res[t]++;log(0,`traded ${ic(g).repeat(4)} for ${ic(t)} with the bank.`);afterAction();
+  }
+});
+$('newGame').addEventListener('click',()=>{newGame();setupNext()});
+document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&['path','bed','castle'].includes(state.mode)){state.mode=null;render()}});
+
+/* ---------- boot ---------- */
+function start(data){
+  if(data&&data.state&&data.state.b&&data.state.b.kind==='rect'){state=data.state;state.token=Math.random()}else newGame();
+  if(state.phase==='setup')setupNext();
+  else{render();if(cur().bot&&state.winner==null)runBot()}
+}
+window.claude?.hot?.snapshot?.(()=>({state}));
+window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
+</script>
+
+</body>
+</html>
